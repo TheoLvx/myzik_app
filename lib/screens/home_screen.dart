@@ -14,7 +14,15 @@ class _HomeScreenState extends State<HomeScreen> {
   String _selectedGenre = 'Tous';
   late Future<List<dynamic>> _tracksFuture;
 
-  final List<String> genres = ['Tous', 'Rap', 'Pop', 'Rock', 'Jazz', 'Classique'];
+  final Map<String, String> genreMap = {
+    'Tous': '',
+    'Rap': '116',
+    'Pop': '132',
+    'Rock': '152',
+    'Jazz': '129',
+    'Classique': '98',
+  };
+
 
   @override
   void initState() {
@@ -22,12 +30,20 @@ class _HomeScreenState extends State<HomeScreen> {
     _tracksFuture = deezerService.fetchDeezerTracks("top"); // suggestion par défaut
   }
 
-  Future<List<dynamic>> _loadTracks({String? query}) async {
-    final genre = _selectedGenre == 'Tous' ? '' : _selectedGenre;
-    final search = query ?? _searchController.text;
-    final fullQuery = [genre, search].where((e) => e.isNotEmpty).join(" ");
-    return await deezerService.fetchDeezerTracks(fullQuery.isEmpty ? "top" : fullQuery);
+  Future<List<dynamic>> _loadTracks() async {
+    if (_searchController.text.isNotEmpty) {
+      return await deezerService.fetchDeezerTracks(_searchController.text);
+    }
+
+    final genreId = genreMap[_selectedGenre];
+    if (genreId != null && genreId.isNotEmpty) {
+      return await deezerService.fetchTracksByGenre(genreId);
+    }
+
+    return await deezerService.fetchDeezerTracks("top");
   }
+
+
 
   void _performSearch() {
     setState(() {
@@ -68,7 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       });
                     }
                   },
-                  items: genres.map((genre) {
+                  items: genreMap.keys.map((genre) {
                     return DropdownMenuItem(
                       value: genre,
                       child: Text(genre),
