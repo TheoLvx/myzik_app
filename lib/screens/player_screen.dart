@@ -22,6 +22,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
   Duration _duration = Duration.zero;
   Duration _position = Duration.zero;
   bool _isPlaying = false;
+  bool? _isFavorite;
   final FavoritesService _favoritesService = FavoritesService();
   final LocationService _locationService = LocationService();
 
@@ -30,14 +31,27 @@ class _PlayerScreenState extends State<PlayerScreen> {
     super.initState();
     _player = AudioPlayer();
     _initializePlayer();
+    _loadFavoriteStatus();
   }
 
-  // Initialisation du lecteur audio
+  @override
+  void dispose() {
+    _player.dispose();
+    super.dispose();
+  }
+
   Future<void> _initializePlayer() async {
     try {
       await _player.setUrl(widget.musique.audioUrl);
-      // Vérification de la durée
-      _duration = _player.duration ?? Duration.zero;
+
+      // Écoute la durée quand elle est dispo
+      _player.durationStream.listen((newDuration) {
+        if (newDuration != null) {
+          setState(() {
+            _duration = newDuration;
+          });
+        }
+      });
 
       _player.positionStream.listen((position) {
         setState(() {
@@ -55,39 +69,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
   }
 
-
-  // Fonction pour obtenir la position de l'utilisateur et l'enregistrer
-  Future<void> _getLocationAndLog() async {
-    // Appel au service de géolocalisation pour récupérer la position
-    Position? position = await _locationService.getCurrentPosition();
-
-    if (position != null) {
-      print('Position actuelle: ${position.latitude}, ${position.longitude}');
-
-      // Sauvegarde la position dans Firestore
-      await _logLocation(position);
-    } else {
-      print('Permission de localisation refusée ou position non disponible');
-    }
-  }
-
-  // Fonction pour enregistrer la position dans Firestore
-  Future<void> _logLocation(Position position) async {
-    try {
-      await FirebaseFirestore.instance.collection('ecoutes').add({
-        'latitude': position.latitude,
-        'longitude': position.longitude,
-        'timestamp': FieldValue.serverTimestamp(),
-        'user_id': FirebaseAuth.instance.currentUser?.uid, // ID de l'utilisateur connecté
-      });
-      print("Position enregistrée dans Firestore");
-    } catch (e) {
-      print("Erreur lors de l'enregistrement de la position: $e");
-    }
-  }
-
-
-  // Fonction pour jouer / mettre en pause la musique
   void _togglePlayPause() {
     if (_isPlaying) {
       _player.pause();
@@ -96,88 +77,131 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
   }
 
-  // Fonction pour ajouter aux favoris
-  Future<void> _addToFavorites() async {
-    await _favoritesService.addToFavorites(widget.musique.id);
+  Future<void> _getLocationAndLog() async {
+    Position? position = await _locationService.getCurrentPosition();
+    if (position != null) {
+      await _logLocation(position);
+    }
   }
 
-  // Fonction pour vérifier si la musique est déjà dans les favoris
-  Future<bool> _isMusicInFavorites() async {
-    return await _favoritesService.isFavorite(widget.musique.id);
+  Future<void> _logLocation(Position position) async {
+    try {
+      await FirebaseFirestore.instance.collection('ecoutes').add({
+        'latitude': position.latitude,
+        'longitude': position.longitude,
+        'timestamp': FieldValue.serverTimestamp(),
+        'user_id': FirebaseAuth.instance.currentUser?.uid,
+      });
+      print("Position enregistrée dans Firestore");
+    } catch (e) {
+      print("Erreur lors de l'enregistrement de la position: $e");
+    }
+  }
+
+  Future<void> _loadFavoriteStatus() async {
+    final result = await _favoritesService.isFavorite(widget.musique.id);
+    setState(() {
+      _isFavorite = result;
+    });
+  }
+
+  Future<void> _addToFavorites() async {
+    await _favoritesService.addToFavorites(widget.musique.id);
+    _loadFavoriteStatus(); // rafraîchit l’état
   }
 
   @override
   Widget build(BuildContext context) {
+    final formattedPosition = _position.toString().split('.').first;
+    final formattedDuration = _duration.toString().split('.').first;
+
     return Scaffold(
       appBar: AppBar(title: Text('Lecteur de musique')),
       drawer: CustomDrawer(),
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Affichage de l'image de couverture si disponible
-          widget.musique.imageUrl != null
-              ? Image.network(widget.musique.imageUrl!)
+          // Image
+          widget.musique.imageUrl.isNotEmpty
+              ? Image.network(widget.musique.imageUrl)
               : SizedBox.shrink(),
-          // Affichage du titre et de l'artiste
+
+          SizedBox(height: 16),
+
+          // Titre et artiste
           Text(widget.musique.titre, style: TextStyle(fontSize: 24)),
           Text(widget.musique.artiste, style: TextStyle(fontSize: 18)),
 
-          // Barre de progression
+          SizedBox(height: 16),
+
+          // Slider sécurisé
           Slider(
-            value: _position.inSeconds.toDouble(),
-            max: _duration.inSeconds.toDouble(),
-            onChanged: (value) {
-              setState(() {
-                _player.seek(Duration(seconds: value.toInt()));
-              });
-            },
+            value: _duration.inSeconds > 0
+                ? _position.inSeconds.clamp(0, _duration.inSeconds).toDouble()
+                : 0.0,
+            max: _duration.inSeconds > 0
+                ? _duration.inSeconds.toDouble()
+                : 1.0,
+            onChanged: _duration.inSeconds > 0
+                ? (value) {
+              _player.seek(Duration(seconds: value.toInt()));
+            }
+                : null,
           ),
 
-          // Affichage du temps de lecture
+          // Durée
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(_position.toString().split('.').first),
-              Text(_duration.toString().split('.').first),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Text(formattedPosition),
+              ),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 16),
+                child: Text(formattedDuration),
+              ),
             ],
           ),
 
-          // Bouton Play/Pause
+          // Lecture / Pause
           IconButton(
             icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
-            onPressed: _togglePlayPause,
             iconSize: 50,
+            onPressed: _togglePlayPause,
           ),
 
-          // Bouton Ajouter aux favoris
-          ElevatedButton(
-            onPressed: _addToFavorites,
-            child: FutureBuilder<bool>(
-              future: _isMusicInFavorites(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
-                }
+          SizedBox(height: 16),
 
-                if (snapshot.hasData && snapshot.data == true) {
-                  return Text('Déjà dans les favoris');
-                } else {
-                  return Text('Ajouter aux favoris');
-                }
-              },
-            ),
+          // Bouton favoris optimisé
+          _isFavorite == null
+              ? CircularProgressIndicator()
+              : ElevatedButton(
+            onPressed: _isFavorite! ? null : _addToFavorites,
+            child: Text(_isFavorite!
+                ? 'Déjà dans les favoris'
+                : 'Ajouter aux favoris'),
           ),
+
+          SizedBox(height: 8),
+
+          // Bouton Lecture
           ElevatedButton(
             onPressed: _togglePlayPause,
             child: Text(_isPlaying ? 'Pause' : 'Lecture'),
           ),
+
           SizedBox(height: 20),
+
+          // Position texte
           Text(
-            "Position actuelle: ${_position.inMinutes}:${(_position.inSeconds % 60).toString().padLeft(2, '0')}",
+            "Position actuelle : ${_position.inMinutes}:${(_position.inSeconds % 60).toString().padLeft(2, '0')}",
             style: TextStyle(fontSize: 18),
           ),
 
           SizedBox(height: 20),
+
+          // Enregistrement position
           ElevatedButton(
             onPressed: _getLocationAndLog,
             child: Text('Enregistrer ma position'),

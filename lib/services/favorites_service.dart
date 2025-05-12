@@ -5,69 +5,49 @@ class FavoritesService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Fonction pour ajouter une musique aux favoris
+  // Ajouter une musique aux favoris
   Future<void> addToFavorites(String musiqueId) async {
-    User? user = _auth.currentUser;
+    final user = _auth.currentUser;
+    if (user == null) return;
 
-    if (user != null) {
-      try {
-        // Ajoute l'ID de la musique à la liste des favoris
-        await _firestore
-            .collection('utilisateurs')
-            .doc(user.uid)
-            .update({
-          'favoris': FieldValue.arrayUnion([musiqueId]),
-        });
-        print('Musique ajoutée aux favoris');
-      } catch (e) {
-        print('Erreur ajout aux favoris: $e');
-      }
-    } else {
-      print('Utilisateur non connecté');
+    try {
+      await _firestore.collection('utilisateurs').doc(user.uid).update({
+        'favoris': FieldValue.arrayUnion([musiqueId])
+      });
+      print('✅ Musique ajoutée aux favoris');
+    } catch (e) {
+      print('❌ Erreur ajout aux favoris : $e');
     }
   }
 
-  // Fonction pour retirer une musique des favoris
+  // Retirer une musique des favoris
   Future<void> removeFromFavorites(String musiqueId) async {
-    User? user = _auth.currentUser;
+    final user = _auth.currentUser;
+    if (user == null) return;
 
-    if (user != null) {
-      try {
-        // Retire l'ID de la musique de la liste des favoris
-        await _firestore
-            .collection('utilisateurs')
-            .doc(user.uid)
-            .update({
-          'favoris': FieldValue.arrayRemove([musiqueId]),
-        });
-        print('Musique retirée des favoris');
-      } catch (e) {
-        print('Erreur retrait des favoris: $e');
-      }
-    } else {
-      print('Utilisateur non connecté');
+    try {
+      await _firestore.collection('utilisateurs').doc(user.uid).update({
+        'favoris': FieldValue.arrayRemove([musiqueId])
+      });
+      print('🗑️ Musique retirée des favoris');
+    } catch (e) {
+      print('❌ Erreur retrait favoris : $e');
     }
   }
 
-  // Fonction pour vérifier si une musique est dans les favoris
+  // Vérifier si une musique est déjà dans les favoris
   Future<bool> isFavorite(String musiqueId) async {
-    User? user = _auth.currentUser;
-    if (user != null) {
-      try {
-        DocumentSnapshot doc = await _firestore
-            .collection('utilisateurs')
-            .doc(user.uid)
-            .get();
+    final user = _auth.currentUser;
+    if (user == null) return false;
 
-        // Vérifie si l'ID de la musique existe dans la liste des favoris
-        List<dynamic> favoris = doc['favoris'] ?? [];
-        return favoris.contains(musiqueId);
-      } catch (e) {
-        print('Erreur vérification favoris: $e');
-        return false;
-      }
-    } else {
-      print('Utilisateur non connecté');
+    try {
+      final doc = await _firestore.collection('utilisateurs').doc(user.uid).get();
+      final data = doc.data() as Map<String, dynamic>?;
+
+      final List<dynamic> favoris = data?['favoris'] ?? [];
+      return favoris.contains(musiqueId);
+    } catch (e) {
+      print('❌ Erreur vérification favoris : $e');
       return false;
     }
   }

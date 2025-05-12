@@ -1,56 +1,68 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import '../widgets/custom_drawer.dart';
+import '../services/deezer_service.dart';
 import '../models/musique.dart';
 import 'player_screen.dart';
 
 class HomeScreen extends StatelessWidget {
+  final DeezerService deezerService = DeezerService();
+
+  Future<List<dynamic>> _loadTracks() async {
+    return await deezerService.fetchDeezerTracks("rap");
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Accueil')),
-      drawer: CustomDrawer(),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('musiques').snapshots(),
+      appBar: AppBar(title: Text("Accueil")),
+      body: FutureBuilder<List<dynamic>>(
+        future: _loadTracks(),
         builder: (context, snapshot) {
-          if (snapshot.hasError) {
-            return Center(child: Text('Erreur de chargement'));
-          }
-
           if (snapshot.connectionState == ConnectionState.waiting) {
             return Center(child: CircularProgressIndicator());
           }
 
-          final musiques = snapshot.data!.docs;
-
-          if (musiques.isEmpty) {
-            return Center(child: Text('Aucune musique disponible.'));
+          if (snapshot.hasError) {
+            return Center(child: Text("Erreur : ${snapshot.error}"));
           }
 
+          final tracks = snapshot.data ?? [];
+
           return ListView.builder(
-            itemCount: musiques.length,
+            itemCount: tracks.length,
             itemBuilder: (context, index) {
-              final data = musiques[index].data() as Map<String, dynamic>;
-              final musique = Musique.fromMap(data, musiques[index].id);
+              final track = tracks[index];
+              final title = track['title']?.toString() ?? 'Titre inconnu';
+              final artist = track['artist']?['name']?.toString() ?? 'Artiste inconnu';
+              final image = track['album']?['cover_medium']?.toString() ?? '';
+              final preview = track['preview']?.toString() ?? '';
 
               return Card(
                 margin: EdgeInsets.all(8),
                 child: ListTile(
-                  leading: Image.network(
-                    musique.imageUrl,
-                    width: 50,
-                    height: 50,
-                    fit: BoxFit.cover,
-                  ),
-                  title: Text(musique.titre),
-                  subtitle: Text(musique.artiste),
+                  leading: image.isNotEmpty
+                      ? Image.network(image, width: 50, height: 50, fit: BoxFit.cover)
+                      : Icon(Icons.music_note),
+                  title: Text(title),
+                  subtitle: Text(artist),
                   trailing: IconButton(
                     icon: Icon(Icons.play_arrow),
                     onPressed: () {
-                      Navigator.push(
+                      if (preview.isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Pas d'extrait disponible")),
+                        );
+                        return;
+                      }
+
+                      Navigator.pushNamed(
                         context,
-                        MaterialPageRoute(
-                          builder: (_) => PlayerScreen(musique: musique),
+                        '/player',
+                        arguments: Musique(
+                          id: track['id'].toString(),
+                          titre: title,
+                          artiste: artist,
+                          audioUrl: preview,
+                          imageUrl: image,
                         ),
                       );
                     },

@@ -11,6 +11,7 @@ import 'screens/settings_screen.dart';
 import 'firebase_options.dart';
 import 'models/musique.dart'; // Importer le modèle Musique
 
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
