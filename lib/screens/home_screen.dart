@@ -108,34 +108,32 @@ class _HomeScreenState extends State<HomeScreen> {
                     return Card(
                       margin: EdgeInsets.all(8),
                       child: ListTile(
+                        onTap: () {
+                          if (preview.isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text("Pas d'extrait disponible")),
+                            );
+                            return;
+                          }
+
+                          Navigator.pushNamed(
+                            context,
+                            '/player',
+                            arguments: Musique(
+                              id: track['id'].toString(),
+                              titre: title,
+                              artiste: artist,
+                              audioUrl: preview,
+                              imageUrl: image,
+                            ),
+                          );
+                        },
                         leading: image.isNotEmpty
                             ? Image.network(image, width: 50, height: 50, fit: BoxFit.cover)
                             : Icon(Icons.music_note),
                         title: Text(title),
                         subtitle: Text(artist),
-                        trailing: IconButton(
-                          icon: Icon(Icons.play_arrow),
-                          onPressed: () {
-                            if (preview.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text("Pas d'extrait disponible")),
-                              );
-                              return;
-                            }
-
-                            Navigator.pushNamed(
-                              context,
-                              '/player',
-                              arguments: Musique(
-                                id: track['id'].toString(),
-                                titre: title,
-                                artiste: artist,
-                                audioUrl: preview,
-                                imageUrl: image,
-                              ),
-                            );
-                          },
-                        ),
+                        trailing: Icon(Icons.play_arrow),
                       ),
                     );
                   },

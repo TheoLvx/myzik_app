@@ -166,10 +166,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
           ),
 
           SizedBox(height: 20),
-          Text(
-            "Position : ${_position.inMinutes}:${(_position.inSeconds % 60).toString().padLeft(2, '0')}",
-            style: TextStyle(fontSize: 18),
-          ),
         ],
       ),
     );
