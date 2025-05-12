@@ -1,16 +1,16 @@
-// main.dart
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:google_fonts/google_fonts.dart';
+
+import 'firebase_options.dart';
+
 import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
 import 'screens/home_screen.dart';
-import 'screens/player_screen.dart';
+import 'screens/player_screen.dart' as player_screen;
 import 'screens/favorites_screen.dart';
 import 'screens/settings_screen.dart';
-import 'firebase_options.dart';
-import 'models/musique.dart'; // Importer le modèle Musique
-
+import 'models/musique.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -25,22 +25,27 @@ class MyZikApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'MyZik',
+      debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        textTheme: GoogleFonts.poppinsTextTheme(),
         primarySwatch: Colors.deepPurple,
+        textTheme: GoogleFonts.poppinsTextTheme(),
       ),
       initialRoute: '/login',
       routes: {
         '/login': (_) => LoginScreen(),
         '/register': (_) => RegisterScreen(),
         '/home': (_) => HomeScreen(),
-        // Met à jour la route pour passer le paramètre 'musique'
-        '/player': (context) {
-          final Musique musique = ModalRoute.of(context)!.settings.arguments as Musique;
-          return PlayerScreen(musique: musique); // Passe l'objet musique au PlayerScreen
-        },
         '/favorites': (_) => FavoritesScreen(),
         '/settings': (_) => SettingsScreen(),
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/player') {
+          final musique = settings.arguments as Musique;
+          return MaterialPageRoute(
+            builder: (_) => player_screen.PlayerScreen(musique: musique),
+          );
+        }
+        return null;
       },
     );
   }

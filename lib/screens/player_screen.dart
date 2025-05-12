@@ -8,6 +8,7 @@ import '../services/location_service.dart';
 import '../models/musique.dart';
 import '../widgets/custom_drawer.dart';
 
+
 class PlayerScreen extends StatefulWidget {
   final Musique musique;
 
@@ -44,7 +45,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
     try {
       await _player.setUrl(widget.musique.audioUrl);
 
-      // Écoute la durée quand elle est dispo
       _player.durationStream.listen((newDuration) {
         if (newDuration != null) {
           setState(() {
@@ -92,9 +92,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
         'timestamp': FieldValue.serverTimestamp(),
         'user_id': FirebaseAuth.instance.currentUser?.uid,
       });
-      print("Position enregistrée dans Firestore");
+      print("✅ Position enregistrée");
     } catch (e) {
-      print("Erreur lors de l'enregistrement de la position: $e");
+      print("❌ Erreur localisation : $e");
     }
   }
 
@@ -107,7 +107,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   Future<void> _addToFavorites() async {
     await _favoritesService.addToFavorites(widget.musique.id);
-    _loadFavoriteStatus(); // rafraîchit l’état
+    _loadFavoriteStatus();
   }
 
   @override
@@ -128,13 +128,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
           SizedBox(height: 16),
 
-          // Titre et artiste
           Text(widget.musique.titre, style: TextStyle(fontSize: 24)),
           Text(widget.musique.artiste, style: TextStyle(fontSize: 18)),
 
           SizedBox(height: 16),
 
-          // Slider sécurisé
           Slider(
             value: _duration.inSeconds > 0
                 ? _position.inSeconds.clamp(0, _duration.inSeconds).toDouble()
@@ -143,13 +141,10 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 ? _duration.inSeconds.toDouble()
                 : 1.0,
             onChanged: _duration.inSeconds > 0
-                ? (value) {
-              _player.seek(Duration(seconds: value.toInt()));
-            }
+                ? (value) => _player.seek(Duration(seconds: value.toInt()))
                 : null,
           ),
 
-          // Durée
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -164,7 +159,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
             ],
           ),
 
-          // Lecture / Pause
           IconButton(
             icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
             iconSize: 50,
@@ -173,7 +167,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
           SizedBox(height: 16),
 
-          // Bouton favoris optimisé
+          // Bouton favoris
           _isFavorite == null
               ? CircularProgressIndicator()
               : ElevatedButton(
@@ -183,9 +177,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
                 : 'Ajouter aux favoris'),
           ),
 
-          SizedBox(height: 8),
-
-          // Bouton Lecture
           ElevatedButton(
             onPressed: _togglePlayPause,
             child: Text(_isPlaying ? 'Pause' : 'Lecture'),
@@ -193,15 +184,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
           SizedBox(height: 20),
 
-          // Position texte
           Text(
-            "Position actuelle : ${_position.inMinutes}:${(_position.inSeconds % 60).toString().padLeft(2, '0')}",
+            "Position : ${_position.inMinutes}:${(_position.inSeconds % 60).toString().padLeft(2, '0')}",
             style: TextStyle(fontSize: 18),
           ),
 
           SizedBox(height: 20),
 
-          // Enregistrement position
           ElevatedButton(
             onPressed: _getLocationAndLog,
             child: Text('Enregistrer ma position'),

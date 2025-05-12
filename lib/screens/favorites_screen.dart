@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/musique.dart';
-import 'player_screen.dart';
 
 class FavoritesScreen extends StatelessWidget {
   final String? userId = FirebaseAuth.instance.currentUser?.uid;
@@ -10,40 +9,34 @@ class FavoritesScreen extends StatelessWidget {
   Future<List<Musique>> _getFavoriteMusics() async {
     if (userId == null) return [];
 
-    try {
-      final userDoc = await FirebaseFirestore.instance
-          .collection('utilisateurs')
-          .doc(userId)
-          .get();
+    final doc = await FirebaseFirestore.instance
+        .collection('utilisateurs')
+        .doc(userId)
+        .get();
 
-      final data = userDoc.data() as Map<String, dynamic>?;
+    final data = doc.data();
 
-      List<String> favorisIds = [];
-      if (data != null && data['favoris'] != null) {
-        favorisIds = List<String>.from(data['favoris']);
-      }
+    if (data == null || data['favoris'] == null) return [];
 
-      if (favorisIds.isEmpty) return [];
+    final List<dynamic> ids = data['favoris'];
 
-      final musiquesSnapshot = await FirebaseFirestore.instance
-          .collection('musiques')
-          .where(FieldPath.documentId, whereIn: favorisIds)
-          .get();
+    if (ids.isEmpty) return [];
 
-      return musiquesSnapshot.docs.map((doc) {
-        final data = doc.data() as Map<String, dynamic>;
-        return Musique(
-          id: doc.id,
-          titre: data['titre'],
-          artiste: data['artiste'],
-          audioUrl: data['audioUrl'],
-          imageUrl: data['imageUrl'],
-        );
-      }).toList();
-    } catch (e) {
-      print('❌ Erreur chargement favoris : $e');
-      return [];
-    }
+    final musiquesSnapshot = await FirebaseFirestore.instance
+        .collection('musiques')
+        .where(FieldPath.documentId, whereIn: ids)
+        .get();
+
+    return musiquesSnapshot.docs.map((doc) {
+      final data = doc.data();
+      return Musique(
+        id: doc.id,
+        titre: data['titre'],
+        artiste: data['artiste'],
+        audioUrl: data['audioUrl'],
+        imageUrl: data['imageUrl'],
+      );
+    }).toList();
   }
 
   @override
@@ -58,7 +51,7 @@ class FavoritesScreen extends StatelessWidget {
           }
 
           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(child: Text('Aucune musique en favori.'));
+            return Center(child: Text('Aucune musique en favori'));
           }
 
           final musiques = snapshot.data!;
@@ -68,18 +61,13 @@ class FavoritesScreen extends StatelessWidget {
             itemBuilder: (context, index) {
               final musique = musiques[index];
               return ListTile(
-                leading: musique.imageUrl != null
-                    ? Image.network(musique.imageUrl!, width: 50, height: 50, fit: BoxFit.cover)
+                leading: musique.imageUrl.isNotEmpty
+                    ? Image.network(musique.imageUrl, width: 50, height: 50, fit: BoxFit.cover)
                     : Icon(Icons.music_note),
                 title: Text(musique.titre),
                 subtitle: Text(musique.artiste),
                 onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => PlayerScreen(musique: musique),
-                    ),
-                  );
+                  Navigator.pushNamed(context, '/player', arguments: musique);
                 },
               );
             },
