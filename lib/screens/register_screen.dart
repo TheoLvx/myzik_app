@@ -1,78 +1,91 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../services/auth_service.dart';
+import '../services/auth_services.dart';
+import '../widgets/custom_drawer.dart';
 
 class RegisterScreen extends StatefulWidget {
   @override
-  State<RegisterScreen> createState() => _RegisterScreenState();
+  _RegisterScreenState createState() => _RegisterScreenState();
 }
 
 class _RegisterScreenState extends State<RegisterScreen> {
-  final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
-  String? _error;
+  final _nameController = TextEditingController(); // Ajout du contrôleur pour le nom
+  String _errorMessage = '';
   bool _isLoading = false;
+
+  Future<void> _register() async {
+    String email = _emailController.text;
+    String password = _passwordController.text;
+    String name = _nameController.text;
+
+    if (email.isEmpty || password.isEmpty || name.isEmpty) {
+      setState(() {
+        _errorMessage = 'Tous les champs doivent être remplis.';
+      });
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      _errorMessage = '';
+    });
+
+    try {
+      var result = await AuthService().register(email, password, name);
+      if (result != null) {
+        Navigator.pushReplacementNamed(context, '/home');
+      }
+    } catch (e) {
+      setState(() {
+        _errorMessage = e.toString();
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final auth = Provider.of<AuthService>(context, listen: false);
-
     return Scaffold(
-      appBar: AppBar(title: const Text("Créer un compte")),
+      appBar: AppBar(title: Text('Créer un compte')),
+      drawer: CustomDrawer(),
       body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (_error != null)
-                Text(_error!, style: const TextStyle(color: Colors.red)),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: "Email"),
-                validator: (value) => value!.isEmpty ? "Entrez un email" : null,
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            TextField(
+              controller: _nameController,
+              decoration: InputDecoration(
+                labelText: 'Nom',
+                errorText: _errorMessage.isNotEmpty ? _errorMessage : null,
               ),
-              const SizedBox(height: 10),
-              TextFormField(
-                controller: _passwordController,
-                decoration: const InputDecoration(labelText: "Mot de passe"),
-                obscureText: true,
-                validator: (value) =>
-                value!.length < 6 ? "6 caractères minimum" : null,
+            ),
+            TextField(
+              controller: _emailController,
+              decoration: InputDecoration(
+                labelText: 'Email',
+                errorText: _errorMessage.isNotEmpty ? _errorMessage : null,
               ),
-              const SizedBox(height: 20),
-              _isLoading
-                  ? const CircularProgressIndicator()
-                  : ElevatedButton(
-                onPressed: () async {
-                  if (_formKey.currentState!.validate()) {
-                    setState(() {
-                      _isLoading = true;
-                      _error = null;
-                    });
-
-                    final user = await auth.registerWithEmailAndPassword(
-                      _emailController.text.trim(),
-                      _passwordController.text.trim(),
-                    );
-
-                    setState(() => _isLoading = false);
-
-                    if (user != null) {
-                      Navigator.pushReplacementNamed(context, '/home');
-                    } else {
-                      setState(() {
-                        _error = "Erreur lors de l'inscription.";
-                      });
-                    }
-                  }
-                },
-                child: const Text("S'inscrire"),
+            ),
+            TextField(
+              controller: _passwordController,
+              obscureText: true,
+              decoration: InputDecoration(
+                labelText: 'Mot de passe',
+                errorText: _errorMessage.isNotEmpty ? _errorMessage : null,
               ),
-            ],
-          ),
+            ),
+            SizedBox(height: 20),
+            _isLoading
+                ? CircularProgressIndicator()
+                : ElevatedButton(
+              onPressed: _register,
+              child: Text('Créer un compte'),
+            ),
+          ],
         ),
       ),
     );

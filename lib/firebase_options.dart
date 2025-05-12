@@ -41,46 +41,46 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyAacSv4SPa-RwtnSsHqoPEYlnLoa93q_ss',
-    appId: '1:619446246965:web:b5b03d21f8e94d84f99b7c',
-    messagingSenderId: '619446246965',
-    projectId: 'test-project-ef6c7',
-    authDomain: 'test-project-ef6c7.firebaseapp.com',
-    storageBucket: 'test-project-ef6c7.firebasestorage.app',
+    apiKey: 'AIzaSyD1DMTFYH6qJCNy5_dIB9VN_i1UwCBdr_8',
+    appId: '1:75781920727:web:372fbc523a6f2ae279dd92',
+    messagingSenderId: '75781920727',
+    projectId: 'myzik-app',
+    authDomain: 'myzik-app.firebaseapp.com',
+    storageBucket: 'myzik-app.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDaAL8aZCAjv48GDlEubP6dipfba3tNrOM',
-    appId: '1:619446246965:android:07069036bb2f9386f99b7c',
-    messagingSenderId: '619446246965',
-    projectId: 'test-project-ef6c7',
-    storageBucket: 'test-project-ef6c7.firebasestorage.app',
+    apiKey: 'AIzaSyAYLKXrVHX07gPxd834JYu-TfqZQm0UfiI',
+    appId: '1:75781920727:android:3d619c82a616635579dd92',
+    messagingSenderId: '75781920727',
+    projectId: 'myzik-app',
+    storageBucket: 'myzik-app.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyADtfuV61EhiUTyZo1jgFc6rDh96RGiHyc',
-    appId: '1:619446246965:ios:32aa5ce29927a709f99b7c',
-    messagingSenderId: '619446246965',
-    projectId: 'test-project-ef6c7',
-    storageBucket: 'test-project-ef6c7.firebasestorage.app',
-    iosBundleId: 'com.example.myzikApp',
+    apiKey: 'AIzaSyBg0vcfAAKEOcSA28X77l-CLkbYAzCpQ1Y',
+    appId: '1:75781920727:ios:321f79f3867e085d79dd92',
+    messagingSenderId: '75781920727',
+    projectId: 'myzik-app',
+    storageBucket: 'myzik-app.firebasestorage.app',
+    iosBundleId: 'com.example.myzikAppTest',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyADtfuV61EhiUTyZo1jgFc6rDh96RGiHyc',
-    appId: '1:619446246965:ios:32aa5ce29927a709f99b7c',
-    messagingSenderId: '619446246965',
-    projectId: 'test-project-ef6c7',
-    storageBucket: 'test-project-ef6c7.firebasestorage.app',
-    iosBundleId: 'com.example.myzikApp',
+    apiKey: 'AIzaSyBg0vcfAAKEOcSA28X77l-CLkbYAzCpQ1Y',
+    appId: '1:75781920727:ios:321f79f3867e085d79dd92',
+    messagingSenderId: '75781920727',
+    projectId: 'myzik-app',
+    storageBucket: 'myzik-app.firebasestorage.app',
+    iosBundleId: 'com.example.myzikAppTest',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyAacSv4SPa-RwtnSsHqoPEYlnLoa93q_ss',
-    appId: '1:619446246965:web:2aa15c3d3ff53c25f99b7c',
-    messagingSenderId: '619446246965',
-    projectId: 'test-project-ef6c7',
-    authDomain: 'test-project-ef6c7.firebaseapp.com',
-    storageBucket: 'test-project-ef6c7.firebasestorage.app',
+    apiKey: 'AIzaSyD1DMTFYH6qJCNy5_dIB9VN_i1UwCBdr_8',
+    appId: '1:75781920727:web:482c8d1998b3796779dd92',
+    messagingSenderId: '75781920727',
+    projectId: 'myzik-app',
+    authDomain: 'myzik-app.firebaseapp.com',
+    storageBucket: 'myzik-app.firebasestorage.app',
   );
 }

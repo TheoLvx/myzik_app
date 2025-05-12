@@ -45,5 +45,11 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+    <!-- Permissions pour la géolocalisation -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Nous avons besoin de votre position pour enregistrer vos écoutes géolocalisées.</string>
+    <key>NSLocationAlwaysUsageDescription</key>
+    <string>Nous avons besoin de votre position pour enregistrer vos écoutes géolocalisées en tout temps.</string>
 </dict>
 </plist>

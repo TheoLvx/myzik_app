@@ -1,11 +1,15 @@
-import 'package:flutter/material.dart';
+// main.dart
 import 'package:firebase_core/firebase_core.dart';
-import 'firebase_options.dart';
-import 'screens/login_screen.dart';
+import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:provider/provider.dart';
-import 'services/auth_service.dart';
+import 'screens/login_screen.dart';
 import 'screens/register_screen.dart';
+import 'screens/home_screen.dart';
+import 'screens/player_screen.dart';
+import 'screens/favorites_screen.dart';
+import 'screens/settings_screen.dart';
+import 'firebase_options.dart';
+import 'models/musique.dart'; // Importer le modèle Musique
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,36 +22,25 @@ void main() async {
 class MyZikApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Provider<AuthService>( // ← voici le Provider injecté
-      create: (_) => AuthService(),
-      child: MaterialApp(
-        title: 'MyZik',
-        theme: ThemeData(
-          primarySwatch: Colors.deepPurple,
-          textTheme: GoogleFonts.poppinsTextTheme(),
-        ),
-        initialRoute: '/',
-        routes: {
-          '/': (context) => LoginScreen(),
-          '/home': (context) => const HomeScreen(),
-          '/register': (context) => RegisterScreen(),
+    return MaterialApp(
+      title: 'MyZik',
+      theme: ThemeData(
+        textTheme: GoogleFonts.poppinsTextTheme(),
+        primarySwatch: Colors.deepPurple,
+      ),
+      initialRoute: '/login',
+      routes: {
+        '/login': (_) => LoginScreen(),
+        '/register': (_) => RegisterScreen(),
+        '/home': (_) => HomeScreen(),
+        // Met à jour la route pour passer le paramètre 'musique'
+        '/player': (context) {
+          final Musique musique = ModalRoute.of(context)!.settings.arguments as Musique;
+          return PlayerScreen(musique: musique); // Passe l'objet musique au PlayerScreen
         },
-
-      ),
-    );
-  }
-}
-
-class HomeScreen extends StatelessWidget {
-  const HomeScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Accueil')),
-      body: const Center(
-        child: Text('Bienvenue sur MyZik 🎶'),
-      ),
+        '/favorites': (_) => FavoritesScreen(),
+        '/settings': (_) => SettingsScreen(),
+      },
     );
   }
 }
