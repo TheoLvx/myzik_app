@@ -1,3 +1,4 @@
+// ... imports
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -96,10 +97,14 @@ class _PlayerScreenState extends State<PlayerScreen> {
         'imageUrl': widget.musique.imageUrl,
       });
       print('✅ Musique enregistrée dans Firestore');
-    } else {
-      print('ℹ️ Musique déjà présente dans Firestore');
     }
 
+    _loadFavoriteStatus();
+  }
+
+  Future<void> _removeFromFavorites() async {
+    await _favoritesService.removeFromFavorites(widget.musique.id);
+    print('🗑️ Musique retirée des favoris');
     _loadFavoriteStatus();
   }
 
@@ -159,9 +164,11 @@ class _PlayerScreenState extends State<PlayerScreen> {
           _isFavorite == null
               ? CircularProgressIndicator()
               : ElevatedButton(
-            onPressed: _isFavorite! ? null : _addToFavorites,
+            onPressed: _isFavorite! ? _removeFromFavorites : _addToFavorites,
             child: Text(
-              _isFavorite! ? 'Déjà dans les favoris' : 'Ajouter aux favoris',
+              _isFavorite!
+                  ? 'Retirer des favoris'
+                  : 'Ajouter aux favoris',
             ),
           ),
 
