@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../services/auth_services.dart';
-import '../widgets/custom_drawer.dart';
 
 class LoginScreen extends StatefulWidget {
   @override
@@ -45,7 +44,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Connexion')),
-      drawer: CustomDrawer(),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Center(

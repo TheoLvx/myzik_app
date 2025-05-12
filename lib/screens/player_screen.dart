@@ -1,13 +1,10 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:just_audio/just_audio.dart';
 import '../services/favorites_service.dart';
-import '../services/location_service.dart';
 import '../models/musique.dart';
 import '../widgets/custom_drawer.dart';
-
 
 class PlayerScreen extends StatefulWidget {
   final Musique musique;
@@ -25,7 +22,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
   bool _isPlaying = false;
   bool? _isFavorite;
   final FavoritesService _favoritesService = FavoritesService();
-  final LocationService _locationService = LocationService();
 
   @override
   void initState() {
@@ -77,27 +73,6 @@ class _PlayerScreenState extends State<PlayerScreen> {
     }
   }
 
-  Future<void> _getLocationAndLog() async {
-    Position? position = await _locationService.getCurrentPosition();
-    if (position != null) {
-      await _logLocation(position);
-    }
-  }
-
-  Future<void> _logLocation(Position position) async {
-    try {
-      await FirebaseFirestore.instance.collection('ecoutes').add({
-        'latitude': position.latitude,
-        'longitude': position.longitude,
-        'timestamp': FieldValue.serverTimestamp(),
-        'user_id': FirebaseAuth.instance.currentUser?.uid,
-      });
-      print("✅ Position enregistrée");
-    } catch (e) {
-      print("❌ Erreur localisation : $e");
-    }
-  }
-
   Future<void> _loadFavoriteStatus() async {
     final result = await _favoritesService.isFavorite(widget.musique.id);
     setState(() {
@@ -107,6 +82,24 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   Future<void> _addToFavorites() async {
     await _favoritesService.addToFavorites(widget.musique.id);
+
+    final musiqueDoc = FirebaseFirestore.instance
+        .collection('musiques')
+        .doc(widget.musique.id);
+
+    final doc = await musiqueDoc.get();
+    if (!doc.exists) {
+      await musiqueDoc.set({
+        'titre': widget.musique.titre,
+        'artiste': widget.musique.artiste,
+        'audioUrl': widget.musique.audioUrl,
+        'imageUrl': widget.musique.imageUrl,
+      });
+      print('✅ Musique enregistrée dans Firestore');
+    } else {
+      print('ℹ️ Musique déjà présente dans Firestore');
+    }
+
     _loadFavoriteStatus();
   }
 
@@ -121,18 +114,15 @@ class _PlayerScreenState extends State<PlayerScreen> {
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          // Image
           widget.musique.imageUrl.isNotEmpty
               ? Image.network(widget.musique.imageUrl)
               : SizedBox.shrink(),
 
           SizedBox(height: 16),
-
           Text(widget.musique.titre, style: TextStyle(fontSize: 24)),
           Text(widget.musique.artiste, style: TextStyle(fontSize: 18)),
 
           SizedBox(height: 16),
-
           Slider(
             value: _duration.inSeconds > 0
                 ? _position.inSeconds.clamp(0, _duration.inSeconds).toDouble()
@@ -166,34 +156,19 @@ class _PlayerScreenState extends State<PlayerScreen> {
           ),
 
           SizedBox(height: 16),
-
-          // Bouton favoris
           _isFavorite == null
               ? CircularProgressIndicator()
               : ElevatedButton(
             onPressed: _isFavorite! ? null : _addToFavorites,
-            child: Text(_isFavorite!
-                ? 'Déjà dans les favoris'
-                : 'Ajouter aux favoris'),
-          ),
-
-          ElevatedButton(
-            onPressed: _togglePlayPause,
-            child: Text(_isPlaying ? 'Pause' : 'Lecture'),
+            child: Text(
+              _isFavorite! ? 'Déjà dans les favoris' : 'Ajouter aux favoris',
+            ),
           ),
 
           SizedBox(height: 20),
-
           Text(
             "Position : ${_position.inMinutes}:${(_position.inSeconds % 60).toString().padLeft(2, '0')}",
             style: TextStyle(fontSize: 18),
-          ),
-
-          SizedBox(height: 20),
-
-          ElevatedButton(
-            onPressed: _getLocationAndLog,
-            child: Text('Enregistrer ma position'),
           ),
         ],
       ),

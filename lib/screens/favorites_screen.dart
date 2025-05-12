@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../models/musique.dart';
+import '../widgets/custom_drawer.dart';
+
 
 class FavoritesScreen extends StatelessWidget {
   final String? userId = FirebaseAuth.instance.currentUser?.uid;
@@ -19,6 +21,7 @@ class FavoritesScreen extends StatelessWidget {
     if (data == null || data['favoris'] == null) return [];
 
     final List<dynamic> ids = data['favoris'];
+    print('📄 IDs favoris : $ids');
 
     if (ids.isEmpty) return [];
 
@@ -27,14 +30,16 @@ class FavoritesScreen extends StatelessWidget {
         .where(FieldPath.documentId, whereIn: ids)
         .get();
 
+    print('🎵 Musiques Firestore récupérées : ${musiquesSnapshot.docs.length}');
+
     return musiquesSnapshot.docs.map((doc) {
       final data = doc.data();
       return Musique(
         id: doc.id,
-        titre: data['titre'],
-        artiste: data['artiste'],
-        audioUrl: data['audioUrl'],
-        imageUrl: data['imageUrl'],
+        titre: data['titre'] ?? '',
+        artiste: data['artiste'] ?? '',
+        audioUrl: data['audioUrl'] ?? '',
+        imageUrl: data['imageUrl'] ?? '',
       );
     }).toList();
   }
@@ -43,6 +48,7 @@ class FavoritesScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Mes favoris')),
+      drawer: CustomDrawer(),
       body: FutureBuilder<List<Musique>>(
         future: _getFavoriteMusics(),
         builder: (context, snapshot) {
